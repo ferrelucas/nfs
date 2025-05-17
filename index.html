@@ -68,6 +68,7 @@
     <div id="game-message" class="message-box" style="display: none;"></div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
     <script>
         // --- SCENE SETUP ---
         let scene, camera, renderer;
@@ -327,18 +328,46 @@
             nose.castShadow = true;
             car.add(nose);
 
-            // Neon Underglow with a single RectAreaLight
+            // Neon Underglow - Using multiple PointLights for more spread and intensity
             const underglowColor = 0x00ff00; // Green
-            const underglowIntensity = 75;  // Increased intensity for RectAreaLight
-            const underglowRectWidth = bodyWidth * 0.8; // Width of the light strip (along car width)
-            const underglowRectLength = bodyLength * 0.75; // Length of the light strip (along car length)
+            const underglowPointIntensity = 12; 
+            const underglowPointDistance = 3.0; 
 
-            const underglowLight = new THREE.RectAreaLight(underglowColor, underglowIntensity, underglowRectWidth, underglowRectLength);
-            underglowLight.position.set(0, -bodyHeight / 2 - 0.08, 0); // Centered under the car, slightly lower
-            underglowLight.rotation.x = -Math.PI / 2; // Point downwards
-            car.add(underglowLight);
-            // const underglowHelper = new THREE.RectAreaLightHelper(underglowLight); // For debugging
-            // car.add(underglowHelper);
+            const underglowPointsData = [
+                {x: 0, z: bodyLength * 0.4},  
+                {x: 0, z: 0},                   
+                {x: 0, z: -bodyLength * 0.4},  
+                {x: -bodyWidth * 0.35, z: bodyLength * 0.25}, 
+                {x:  bodyWidth * 0.35, z: bodyLength * 0.25}, 
+                {x: -bodyWidth * 0.35, z: -bodyLength * 0.25},
+                {x:  bodyWidth * 0.35, z: -bodyLength * 0.25},
+                {x: -bodyWidth * 0.15, z: 0}, 
+                {x:  bodyWidth * 0.15, z: 0}  
+            ];
+
+            underglowPointsData.forEach(data => {
+                const pointLight = new THREE.PointLight(underglowColor, underglowPointIntensity, underglowPointDistance, 2);
+                pointLight.position.set(data.x, -bodyHeight / 2 - 0.12, data.z); 
+                car.add(pointLight);
+            });
+            
+            // Add one very bright yellow point light underneath
+            const brightYellowUnderglow = new THREE.PointLight(0xffff00, 45, 5.5, 2); // Increased intensity (was 25), increased distance
+            brightYellowUnderglow.position.set(0, -bodyHeight / 2 - 0.18, 0); // Slightly lower
+            car.add(brightYellowUnderglow);
+
+            // Lights for building reflections (invisible point lights)
+            const reflectionLightIntensity = 0.8;
+            const reflectionLightDistance = 15;
+            const reflectionLightL = new THREE.PointLight(0xffffff, reflectionLightIntensity, reflectionLightDistance, 1.5);
+            reflectionLightL.position.set(-bodyWidth * 0.6, bodyHeight * 0.8, 0); 
+            reflectionLightL.castShadow = false;
+            car.add(reflectionLightL);
+
+            const reflectionLightR = new THREE.PointLight(0xffffff, reflectionLightIntensity, reflectionLightDistance, 1.5);
+            reflectionLightR.position.set(bodyWidth * 0.6, bodyHeight * 0.8, 0);
+            reflectionLightR.castShadow = false;
+            car.add(reflectionLightR);
 
 
             const headLightHeight = 0.08; 
@@ -375,7 +404,6 @@
             actualHeadLightR.target.position.set(headLightMeshR.position.x, headLightMeshR.position.y - 0.5, headLightMeshR.position.z + 15);
             car.add(actualHeadLightR); car.add(actualHeadLightR.target);
 
-            // Taillights: Adjusted size and position
             const tlWidth = (bodyWidth * 0.38 * 0.75); 
             const tlHeight = (0.16 * 0.75);     
             const tlCornerRadius = Math.min(tlWidth, tlHeight) * 0.35; 
@@ -432,16 +460,16 @@
             car.add(actualTailLightR);
             car.add(actualTailLightR.target);
 
-            const wheelRadius = 0.35;
-            const wheelWidth = 0.25;
+            const wheelRadius = 0.28; 
+            const wheelWidth = 0.22; 
             const wheelGeometry = new THREE.CylinderGeometry(wheelRadius, wheelRadius, wheelWidth, 24);
             const wheelMaterial = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.8, metalness: 0.1 });
 
             const wheelPositions = [
-                { x: -bodyWidth / 2 + wheelWidth * 0.7, y: -bodyHeight / 2 + wheelRadius - 0.1, z: bodyLength / 2 - wheelRadius * 1.8 }, 
-                { x:  bodyWidth / 2 - wheelWidth * 0.7, y: -bodyHeight / 2 + wheelRadius - 0.1, z: bodyLength / 2 - wheelRadius * 1.8 }, 
-                { x: -bodyWidth / 2 + wheelWidth * 0.7, y: -bodyHeight / 2 + wheelRadius - 0.1, z: -bodyLength / 2 + wheelRadius * 1.8 }, 
-                { x:  bodyWidth / 2 - wheelWidth * 0.7, y: -bodyHeight / 2 + wheelRadius - 0.1, z: -bodyLength / 2 + wheelRadius * 1.8 }  
+                { x: -bodyWidth / 2 + wheelWidth * 0.7, y: -bodyHeight / 2 + wheelRadius - 0.08, z: bodyLength / 2 - wheelRadius * 1.9 }, 
+                { x:  bodyWidth / 2 - wheelWidth * 0.7, y: -bodyHeight / 2 + wheelRadius - 0.08, z: bodyLength / 2 - wheelRadius * 1.9 }, 
+                { x: -bodyWidth / 2 + wheelWidth * 0.7, y: -bodyHeight / 2 + wheelRadius - 0.08, z: -bodyLength / 2 + wheelRadius * 1.9 }, 
+                { x:  bodyWidth / 2 - wheelWidth * 0.7, y: -bodyHeight / 2 + wheelRadius - 0.08, z: -bodyLength / 2 + wheelRadius * 1.9 }  
             ];
 
             wheelPositions.forEach(pos => {

@@ -68,7 +68,6 @@
     <div id="game-message" class="message-box" style="display: none;"></div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    
     <script>
         // --- SCENE SETUP ---
         let scene, camera, renderer;
@@ -90,7 +89,7 @@
 
 
         // --- CAR AND CAMERA PARAMETERS ---
-        const carSpeed = 0.15;
+        const carSpeed = 0.18; 
         const cameraLagFactor = 0.05;
         const cameraSideViewFactor = 0.2;
         let targetCameraX = 0;
@@ -98,7 +97,7 @@
         const carModelWidth = 2.2;
 
         // --- MOVEMENT AND ANIMATION PARAMETERS ---
-        const gameSpeed = 1.6; // Increased game speed further
+        const gameSpeed = 1.92; 
         const buildingMoveSpeedFactor = 1.0;
         const bridgeMoveSpeedFactor = 0.08; 
         const distantSkylineMoveSpeedFactor = 0.03; 
@@ -144,11 +143,13 @@
             try {
                 scene = new THREE.Scene();
                 scene.fog = new THREE.Fog(0x00001a, 70, 800); 
+                console.log("Scene fog set.");
 
                 camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
                 camera.position.set(0, 2.5, 7);
                 camera.lookAt(0, 1, 0);
                 scene.add(camera); 
+                console.log("Camera set up.");
 
                 renderer = new THREE.WebGLRenderer({ antialias: true });
                 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -163,9 +164,9 @@
                 renderer.domElement.addEventListener('touchend', handleTouchEnd, { passive: false });
 
 
-                const ambientLight = new THREE.AmbientLight(0x404060, 2.2); // Increased ambient light
+                const ambientLight = new THREE.AmbientLight(0x404060, 2.2); 
                 scene.add(ambientLight);
-                const directionalLight = new THREE.DirectionalLight(0x8080ff, 0.15); // Slightly increased directional
+                const directionalLight = new THREE.DirectionalLight(0x8080ff, 0.15); 
                 directionalLight.position.set(5, 1.6155, 2);
                 directionalLight.target.position.set(0, 0, 0);
                 scene.add(directionalLight.target);
@@ -280,7 +281,7 @@
                 metalness: 0.95,        
                 roughness: 0.05,        
                 emissive: carEmissiveColor, 
-                emissiveIntensity: 0.3,  
+                emissiveIntensity: 0.35,  
                 clearcoat: 1.0,         
                 clearcoatRoughness: 0.03 
             });
@@ -320,52 +321,24 @@
             cabin.castShadow = true;
             car.add(cabin);
 
-            const sideWindowMaterial = new THREE.MeshStandardMaterial({
-                color: 0x111122, transparent: true, opacity: 0.3, roughness: 0.1, metalness: 0.1
-            });
-            const sideWindowHeight = cabinHeight * 0.7;
-            const sideWindowLength = cabinLength * 0.45;
-            const sideWindowDepth = 0.03;
-            const sideWindowGeometry = new THREE.BoxGeometry(sideWindowDepth, sideWindowHeight, sideWindowLength);
-            
-            const sideWindowL = new THREE.Mesh(sideWindowGeometry, sideWindowMaterial);
-            sideWindowL.position.set(-cabinWidth/2 - sideWindowDepth/2 + 0.015, cabin.position.y, cabin.position.z);
-            car.add(sideWindowL);
-
-            const sideWindowR = new THREE.Mesh(sideWindowGeometry, sideWindowMaterial);
-            sideWindowR.position.set(cabinWidth/2 + sideWindowDepth/2 - 0.015, cabin.position.y, cabin.position.z);
-            car.add(sideWindowR);
-
-            const windshieldWidth = cabinWidth * 0.95;
-            const windshieldHeight = 0.03; 
-            const windshieldLength = cabinHeight * 0.85; 
-            const windshieldGeom = new THREE.BoxGeometry(windshieldWidth, windshieldHeight, windshieldLength);
-            const windshield = new THREE.Mesh(windshieldGeom, sideWindowMaterial); 
-            windshield.position.set(
-                0, 
-                cabin.position.y + cabinHeight * 0.1, 
-                cabin.position.z + cabinLength * 0.35
-            );
-            windshield.rotation.x = -Math.PI / 3.8; 
-            car.add(windshield);
-
             const noseGeometry = new THREE.BoxGeometry(bodyWidth * 0.8, bodyHeight * 0.5, bodyLength * 0.35);
             const nose = new THREE.Mesh(noseGeometry, carMaterial); 
             nose.position.set(0, -bodyHeight * 0.2, bodyLength * 0.33); 
             nose.castShadow = true;
             car.add(nose);
 
-            // Neon Underglow with RectAreaLights
+            // Neon Underglow with a single RectAreaLight
             const underglowColor = 0x00ff00; // Green
-            const underglowIntensity = 30;  // Intensity for RectAreaLight
+            const underglowIntensity = 75;  // Increased intensity for RectAreaLight
             const underglowRectWidth = bodyWidth * 0.8; // Width of the light strip (along car width)
-            const underglowRectLength = bodyLength * 0.65; // Length of the light strip (along car length)
+            const underglowRectLength = bodyLength * 0.75; // Length of the light strip (along car length)
 
             const underglowLight = new THREE.RectAreaLight(underglowColor, underglowIntensity, underglowRectWidth, underglowRectLength);
-            underglowLight.position.set(0, -bodyHeight / 2 - 0.05, 0); // Centered under the car
-            underglowLight.lookAt(0, -bodyHeight / 2 - 1.05, 0); // Point downwards
-            underglowLight.rotation.x = -Math.PI / 2; // Ensure it's flat, shining down
+            underglowLight.position.set(0, -bodyHeight / 2 - 0.08, 0); // Centered under the car, slightly lower
+            underglowLight.rotation.x = -Math.PI / 2; // Point downwards
             car.add(underglowLight);
+            // const underglowHelper = new THREE.RectAreaLightHelper(underglowLight); // For debugging
+            // car.add(underglowHelper);
 
 
             const headLightHeight = 0.08; 
@@ -402,11 +375,9 @@
             actualHeadLightR.target.position.set(headLightMeshR.position.x, headLightMeshR.position.y - 0.5, headLightMeshR.position.z + 15);
             car.add(actualHeadLightR); car.add(actualHeadLightR.target);
 
-            // Taillights: 75% of previous size
-            const originalTlWidth = bodyWidth * 0.38;
-            const originalTlHeight = 0.16;
-            const tlWidth = originalTlWidth * 0.75; 
-            const tlHeight = originalTlHeight * 0.75;          
+            // Taillights: Adjusted size and position
+            const tlWidth = (bodyWidth * 0.38 * 0.75); 
+            const tlHeight = (0.16 * 0.75);     
             const tlCornerRadius = Math.min(tlWidth, tlHeight) * 0.35; 
             const tlDepth = 0.08; 
 
@@ -424,7 +395,7 @@
             tailLightShape.lineTo( x + tlCornerRadius, y );
             tailLightShape.quadraticCurveTo( x, y, x, y + tlCornerRadius );
 
-            const extrudeSettings = { depth: tlDepth, bevelEnabled: true, bevelThickness: 0.01, bevelSize: 0.01, bevelSegments:1 };
+            const extrudeSettings = { depth: tlDepth, bevelEnabled: true, bevelThickness: 0.005, bevelSize: 0.005, bevelSegments:1 };
             const tailLightRoundedGeometry = new THREE.ExtrudeGeometry( tailLightShape, extrudeSettings );
             tailLightRoundedGeometry.center(); 
 
@@ -433,13 +404,12 @@
             });
             
             const tailLightLMesh = new THREE.Mesh(tailLightRoundedGeometry, tailLightMaterial);
-            // Positioned at the very rear, slightly above the car's centerline for visibility
-            tailLightLMesh.position.set(-bodyWidth * 0.28, 0.08, -(bodyLength / 2) + tlDepth * 0.5 + 0.015); 
+            tailLightLMesh.position.set(-bodyWidth * 0.28, 0.08, -(bodyLength / 2) + tlDepth * 0.4); 
             tailLightLMesh.rotation.y = Math.PI; 
             car.add(tailLightLMesh);
             
             const tailLightRMesh = new THREE.Mesh(tailLightRoundedGeometry, tailLightMaterial);
-            tailLightRMesh.position.set(bodyWidth * 0.28, 0.08, -(bodyLength / 2) + tlDepth * 0.5 + 0.015); 
+            tailLightRMesh.position.set(bodyWidth * 0.28, 0.08, -(bodyLength / 2) + tlDepth * 0.4); 
             tailLightRMesh.rotation.y = Math.PI;
             car.add(tailLightRMesh);
 

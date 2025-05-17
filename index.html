@@ -9,13 +9,16 @@
         canvas { display: block; }
         #instructions {
             position: absolute;
-            top: 10px;
-            left: 10px;
+            bottom: 10px; /* Moved to bottom */
+            left: 50%;    /* Centered */
+            transform: translateX(-50%); /* Centered */
             color: #fff;
-            background-color: rgba(0,0,0,0.5);
-            padding: 10px;
+            background-color: rgba(0,0,0,0.7); /* Slightly more opaque background */
+            padding: 8px 15px; /* Adjusted padding */
             border-radius: 5px;
             font-size: 14px;
+            text-align: center;
+            z-index: 100;
         }
         .message-box {
             position: absolute;
@@ -33,6 +36,27 @@
             display: none;
             font-family: 'Monospace', monospace;
         }
+        #game-logo {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: 'Press Start 2P', cursive;
+            font-size: 36px; 
+            color: #fff;
+            text-align: center;
+            z-index: 100;
+            text-shadow:
+                0 0 5px #fff,
+                0 0 10px #fff,
+                0 0 15px #0077ff, 
+                0 0 20px #0077ff,
+                0 0 25px #0077ff,
+                0 0 35px #00ff00, 
+                0 0 45px #00ff00,
+                0 0 55px #ff00ff, 
+                0 0 65px #ffff00; 
+        }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 </head>
@@ -40,6 +64,7 @@
     <div id="instructions">
         Use Left/Right Arrow Keys to move the car.
     </div>
+    <div id="game-logo">NIGHT DRIVE</div>
     <div id="game-message" class="message-box" style="display: none;"></div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -60,7 +85,7 @@
         const distantBuildingDespawnZ = 100;
         const lightPostSpawnZ = -100;
         const lightPostDespawnZ = 30;
-        const lightPostSpacing = 40; 
+        const lightPostSpacing = 55; 
 
 
         // --- CAR AND CAMERA PARAMETERS ---
@@ -72,7 +97,7 @@
         const carModelWidth = 2.2;
 
         // --- MOVEMENT AND ANIMATION PARAMETERS ---
-        const gameSpeed = 1.2;
+        const gameSpeed = 1.0; 
         const buildingMoveSpeedFactor = 1.0;
         const bridgeMoveSpeedFactor = 0.08; 
         const distantSkylineMoveSpeedFactor = 0.03; 
@@ -92,47 +117,103 @@
         });
 
         function init() {
+            console.log("init started");
             try {
+                console.log("Setting up scene...");
                 scene = new THREE.Scene();
                 scene.fog = new THREE.Fog(0x00001a, 70, 800); 
+                console.log("Scene fog set.");
 
+                console.log("Setting up camera...");
                 camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
                 camera.position.set(0, 2.5, 7);
                 camera.lookAt(0, 1, 0);
                 scene.add(camera); 
+                console.log("Camera set up.");
 
+                console.log("Setting up renderer...");
                 renderer = new THREE.WebGLRenderer({ antialias: true });
                 renderer.setSize(window.innerWidth, window.innerHeight);
                 renderer.setPixelRatio(window.devicePixelRatio);
                 renderer.setClearColor(0x000005); 
                 renderer.shadowMap.enabled = true;
                 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-
                 document.body.appendChild(renderer.domElement);
+                console.log("Renderer set up and appended.");
 
-                const ambientLight = new THREE.AmbientLight(0x404060, 1.8); 
+                console.log("Setting up lights...");
+                const ambientLight = new THREE.AmbientLight(0x404060, 1.5); 
                 scene.add(ambientLight);
-
-                const directionalLight = new THREE.DirectionalLight(0x8080ff, 0.1); // Slightly increased from 0.05
+                const directionalLight = new THREE.DirectionalLight(0x8080ff, 0.1); 
                 directionalLight.position.set(5, 1.6155, 2);
                 directionalLight.target.position.set(0, 0, 0);
                 scene.add(directionalLight.target);
                 scene.add(directionalLight);
+                console.log("Lights set up.");
 
+                console.log("Creating moon...");
                 createMoon();
+                console.log("Moon created.");
+
+                console.log("Creating car...");
                 createCar(); 
+                console.log("Car created.");
+
+                console.log("Creating camera light...");
                 createCameraLight(); 
+                console.log("Camera light created.");
+                
+                console.log("Creating road...");
                 createRoad();
+                console.log("Road created.");
+
+                console.log("Creating initial buildings...");
                 createInitialBuildings();
+                console.log("Initial buildings created.");
+
+                console.log("Creating initial distant skyline...");
                 createInitialDistantSkyline(); 
+                console.log("Initial distant skyline created.");
+
+                console.log("Creating bridge...");
                 createBridge(); 
+                console.log("Bridge created.");
+
+                console.log("Creating initial light posts...");
                 createInitialLightPosts(); 
+                console.log("Initial light posts created.");
+
+                console.log("Starting animation loop...");
                 animate();
-            } catch (error) {
-                console.error("Error during initialization:", error);
+                console.log("init finished successfully");
+
+            } catch (e) { 
+                console.error("CAUGHT ERROR DURING INITIALIZATION:");
+                console.error("Raw error object:", e); 
+                let errorMessage = "Unknown error";
+                if (e) {
+                    if (e.message) {
+                        errorMessage = e.message;
+                        console.error("Error Message:", e.message);
+                    } else {
+                        try {
+                            errorMessage = JSON.stringify(e);
+                            console.error("Error (JSON.stringify):", errorMessage);
+                        } catch (stringifyError) {
+                            errorMessage = "Error object could not be stringified.";
+                            console.error("Error (could not stringify):", e);
+                        }
+                    }
+                    if (e.stack) {
+                        console.error("Error Stack:", e.stack);
+                    }
+                } else {
+                    console.error("Caught error object is null or undefined.");
+                }
+
                 const instructionsDiv = document.getElementById('instructions');
                 if (instructionsDiv) {
-                    instructionsDiv.innerHTML = "Error initializing game. Check console (F12) for details.";
+                    instructionsDiv.innerHTML = "Error initializing game. Check console (F12). Msg: " + errorMessage;
                     instructionsDiv.style.color = "red";
                     instructionsDiv.style.backgroundColor = "black";
                 }
@@ -143,9 +224,8 @@
             const moonRadius = 30;
             const moonGeometry = new THREE.SphereGeometry(moonRadius, 32, 32);
             
-            // Initial/Fallback material
             const initialMoonMaterial = new THREE.MeshStandardMaterial({
-                color: 0xeeeeee, // A neutral grey if texture fails
+                color: 0xeeeeee, 
                 emissive: 0xdddddd,
                 emissiveIntensity: 1.0 
             });
@@ -156,7 +236,7 @@
             const textureLoader = new THREE.TextureLoader();
             textureLoader.load(
                 'https://threejs.org/examples/textures/planets/moon_1024.jpg',
-                (texture) => { // onLoad callback
+                (texture) => { 
                     texture.colorSpace = THREE.SRGBColorSpace; 
                     moon.material.map = texture;
                     moon.material.color.set(0xffffff); 
@@ -164,10 +244,9 @@
                     moon.material.emissiveIntensity = 12.0; 
                     moon.material.needsUpdate = true;
                 },
-                undefined, // onProgress callback (optional)
-                (err) => { // onError callback
+                undefined, 
+                (err) => { 
                     console.error('Error loading moon texture. Using fallback material.', err);
-                    // Ensure fallback is explicitly set if error occurs after initial material assignment
                     moon.material.color.set(0xfff8e1);
                     moon.material.emissive.set(0xfff0a0);
                     moon.material.emissiveIntensity = 12.0;
@@ -194,105 +273,134 @@
         function createCar() {
             car = new THREE.Group();
             scene.add(car); 
-            car.position.y = 0.25;
+            car.position.y = 0.25; 
             car.rotation.y = Math.PI; 
 
-            const carColor = 0xffeb3b; 
+            const carBaseColor = 0xffeb3b; 
+            const carEmissiveColor = 0x000080; 
+
             const carMaterial = new THREE.MeshStandardMaterial({
-                color: carColor,      
+                color: carBaseColor,      
                 metalness: 0.95,        
                 roughness: 0.05,        
-                emissive: carColor,       
-                emissiveIntensity: 0.15,  
+                emissive: carEmissiveColor, 
+                emissiveIntensity: 0.3,  // Subtle navy blue glow
                 clearcoat: 1.0,         
                 clearcoatRoughness: 0.03 
             });
 
             const bodyWidth = carModelWidth;
-            const bodyHeight = 0.5;
-            const bodyLength = 4.5;
+            const bodyHeight = 0.45; 
+            const bodyLength = 4.6;  
 
-            const mainBodyGeometry = new THREE.BoxGeometry(bodyWidth, bodyHeight, bodyLength);
+            const mainBodyShape = new THREE.Shape();
+            const mbw = bodyWidth / 2; 
+            const mbl = bodyLength / 2; 
+            mainBodyShape.moveTo(-mbw * 0.85, -mbl); 
+            mainBodyShape.lineTo(-mbw, -mbl * 0.6);  
+            mainBodyShape.lineTo(-mbw, mbl * 0.5);   
+            mainBodyShape.lineTo(-mbw * 0.75, mbl);  
+            mainBodyShape.lineTo(mbw * 0.75, mbl);   
+            mainBodyShape.lineTo(mbw, mbl * 0.5);
+            mainBodyShape.lineTo(mbw, -mbl * 0.6);
+            mainBodyShape.lineTo(mbw * 0.85, -mbl); 
+            mainBodyShape.closePath();
+
+            const extrudeSettingsBody = { depth: bodyHeight, bevelEnabled: true, bevelThickness: 0.02, bevelSize: 0.02, bevelSegments: 2 };
+            let mainBodyGeometry = new THREE.ExtrudeGeometry(mainBodyShape, extrudeSettingsBody);
+            mainBodyGeometry.center(); 
+            mainBodyGeometry.rotateX(-Math.PI / 2); 
+
             const mainBody = new THREE.Mesh(mainBodyGeometry, carMaterial);
             mainBody.castShadow = true;
             car.add(mainBody);
 
-            const cabinWidth = 1.3;
-            const cabinHeight = 0.6;
+            const cabinWidth = 1.15;
+            const cabinHeight = 0.45;
             const cabinLength = 1.5;
-            const cabinGeometry = new THREE.BoxGeometry(cabinWidth, cabinHeight, cabinLength);
+            const cabinGeometry = new THREE.BoxGeometry(cabinWidth, cabinHeight, cabinLength); 
             const cabin = new THREE.Mesh(cabinGeometry, carMaterial); 
-            cabin.position.set(0, (bodyHeight / 2) + (cabinHeight / 2) - 0.1, - (bodyLength / 2) * 0.25);
+            cabin.position.set(0, bodyHeight * 0.5 + cabinHeight * 0.4, -bodyLength * 0.18); 
             cabin.castShadow = true;
             car.add(cabin);
 
-            const windshieldWidth = cabinWidth * 0.95;
-            const windshieldHeight = 0.05;
-            const windshieldLength = cabinHeight * 0.8;
-            const windshieldMaterial = new THREE.MeshStandardMaterial({
-                color: 0x222244, transparent: true, opacity: 0.4, roughness: 0.2
+            const sideWindowMaterial = new THREE.MeshStandardMaterial({
+                color: 0x111122, transparent: true, opacity: 0.3, roughness: 0.1, metalness: 0.1
             });
+            const sideWindowHeight = cabinHeight * 0.7;
+            const sideWindowLength = cabinLength * 0.45;
+            const sideWindowDepth = 0.03;
+            const sideWindowGeometry = new THREE.BoxGeometry(sideWindowDepth, sideWindowHeight, sideWindowLength);
+            
+            const sideWindowL = new THREE.Mesh(sideWindowGeometry, sideWindowMaterial);
+            sideWindowL.position.set(-cabinWidth/2 - sideWindowDepth/2 + 0.015, cabin.position.y, cabin.position.z);
+            car.add(sideWindowL);
+
+            const sideWindowR = new THREE.Mesh(sideWindowGeometry, sideWindowMaterial);
+            sideWindowR.position.set(cabinWidth/2 + sideWindowDepth/2 - 0.015, cabin.position.y, cabin.position.z);
+            car.add(sideWindowR);
+
+            const windshieldWidth = cabinWidth * 0.95;
+            const windshieldHeight = 0.03; 
+            const windshieldLength = cabinHeight * 0.85; 
             const windshieldGeom = new THREE.BoxGeometry(windshieldWidth, windshieldHeight, windshieldLength);
-            const windshield = new THREE.Mesh(windshieldGeom, windshieldMaterial);
+            const windshield = new THREE.Mesh(windshieldGeom, sideWindowMaterial); 
             windshield.position.set(
-                cabin.position.x, cabin.position.y + cabinHeight * 0.1, cabin.position.z + cabinLength * 0.35
+                0, 
+                cabin.position.y + cabinHeight * 0.1, 
+                cabin.position.z + cabinLength * 0.35
             );
-            windshield.rotation.x = -Math.PI / 5;
+            windshield.rotation.x = -Math.PI / 3.8; 
             car.add(windshield);
 
-            const noseSectionHeight = bodyHeight * 0.6;
-            const noseSectionWidth = bodyWidth * 0.9;
-            const noseSectionLength = bodyLength * 0.35;
-            const noseGeometry = new THREE.BoxGeometry(noseSectionWidth, noseSectionHeight, noseSectionLength);
+            const noseGeometry = new THREE.BoxGeometry(bodyWidth * 0.8, bodyHeight * 0.5, bodyLength * 0.35);
             const nose = new THREE.Mesh(noseGeometry, carMaterial); 
-            nose.position.set(0, -bodyHeight * 0.1, (bodyLength / 2) - (noseSectionLength / 2) + 0.1);
+            nose.position.set(0, -bodyHeight * 0.2, bodyLength * 0.33); 
             nose.castShadow = true;
             car.add(nose);
 
-            const underglowStripHeight = 0.05;
-            const underglowStripThickness = 0.1;
-            const underglowLength = bodyLength * 0.75;
-            const underglowMaterial = new THREE.MeshStandardMaterial({
-                color: 0x00ff00,
-                emissive: 0x00ff00,
-                emissiveIntensity: 2.5
-            });
+            // Neon Underglow with RectAreaLights
+            const underglowColor = 0x00ff00;
+            const underglowIntensity = 25; // Increased intensity
+            const underglowWidth = bodyLength * 0.75; // Length of the strip
+            const underglowHeight = 0.3;      // Width of the strip (was 0.15)
 
-            const underglowLeftGeometry = new THREE.BoxGeometry(underglowStripThickness, underglowStripHeight, underglowLength);
-            const underglowLeft = new THREE.Mesh(underglowLeftGeometry, underglowMaterial);
-            underglowLeft.position.set(-(bodyWidth / 2 - underglowStripThickness / 2 - 0.05), -bodyHeight / 2 - underglowStripHeight / 2 + 0.02, 0);
-            car.add(underglowLeft);
+            const underglowL = new THREE.RectAreaLight(underglowColor, underglowIntensity, underglowWidth, underglowHeight);
+            // Positioned further under and slightly inset
+            underglowL.position.set(-(bodyWidth / 2 - 0.3), -bodyHeight / 2 - 0.05, 0); 
+            underglowL.lookAt(-(bodyWidth / 2 - 0.3), -bodyHeight / 2 - 1.05, 0); // Point downwards
+            car.add(underglowL);
 
-            const underglowRightGeometry = new THREE.BoxGeometry(underglowStripThickness, underglowStripHeight, underglowLength);
-            const underglowRight = new THREE.Mesh(underglowRightGeometry, underglowMaterial);
-            underglowRight.position.set(bodyWidth / 2 - underglowStripThickness / 2 - 0.05, -bodyHeight / 2 - underglowStripHeight / 2 + 0.02, 0);
-            car.add(underglowRight);
+            const underglowR = new THREE.RectAreaLight(underglowColor, underglowIntensity, underglowWidth, underglowHeight);
+            underglowR.position.set(bodyWidth / 2 - 0.3, -bodyHeight / 2 - 0.05, 0);
+            underglowR.lookAt(bodyWidth / 2 - 0.3, -bodyHeight / 2 - 1.05, 0);
+            car.add(underglowR);
 
 
-            const headLightHeight = 0.1;
-            const headLightWidth = 0.4;
-            const headLightDepth = 0.2;
+            const headLightHeight = 0.08; 
+            const headLightWidth = 0.35;
+            const headLightDepth = 0.15;
             const headLightMaterial = new THREE.MeshStandardMaterial({
-                color: 0xffffee, emissive: 0xffffee, emissiveIntensity: 1
+                color: 0xffffee, emissive: 0xffffee, emissiveIntensity: 1.5 
             });
             const headLightGeom = new THREE.BoxGeometry(headLightWidth, headLightHeight, headLightDepth);
             const headLightMeshL = new THREE.Mesh(headLightGeom, headLightMaterial);
             headLightMeshL.position.set(
-                -noseSectionWidth * 0.35, nose.position.y + noseSectionHeight * 0.1,
-                nose.position.z + noseSectionLength / 2 - headLightDepth / 2
+                -carModelWidth * 0.3, nose.position.y + (bodyHeight * 0.5) * 0.1, 
+                nose.position.z + (bodyLength * 0.35) / 2 - headLightDepth / 2
             );
             car.add(headLightMeshL);
             const headLightMeshR = new THREE.Mesh(headLightGeom, headLightMaterial);
             headLightMeshR.position.set(
-                noseSectionWidth * 0.35, nose.position.y + noseSectionHeight * 0.1,
-                nose.position.z + noseSectionLength / 2 - headLightDepth / 2
+                carModelWidth * 0.3, nose.position.y + (bodyHeight * 0.5) * 0.1,
+                nose.position.z + (bodyLength * 0.35) / 2 - headLightDepth / 2
             );
             car.add(headLightMeshR);
 
             const spotLightColor = 0xffffdd;
-            const spotLightIntensity = 42;
+            const spotLightIntensity = 45; 
             const spotLightDistance = 80;
-            const spotLightAngle = Math.PI / 7;
+            const spotLightAngle = Math.PI / 6.5; 
             const spotLightPenumbra = 0.2;
             const actualHeadLightL = new THREE.SpotLight(spotLightColor, spotLightIntensity, spotLightDistance, spotLightAngle, spotLightPenumbra, 1);
             actualHeadLightL.position.set(headLightMeshL.position.x, headLightMeshL.position.y, headLightMeshL.position.z + 0.1);
@@ -303,9 +411,9 @@
             actualHeadLightR.target.position.set(headLightMeshR.position.x, headLightMeshR.position.y - 0.5, headLightMeshR.position.z + 15);
             car.add(actualHeadLightR); car.add(actualHeadLightR.target);
 
-            const tlWidth = bodyWidth * 0.35; 
-            const tlHeight = 0.15;          
-            const tlCornerRadius = Math.min(tlWidth, tlHeight) * 0.3;
+            const tlWidth = bodyWidth * 0.3; 
+            const tlHeight = 0.12;          
+            const tlCornerRadius = Math.min(tlWidth, tlHeight) * 0.4; 
             const tlDepth = 0.08; 
 
             const tailLightShape = new THREE.Shape();
@@ -324,17 +432,20 @@
 
             const extrudeSettings = { depth: tlDepth, bevelEnabled: false };
             const tailLightRoundedGeometry = new THREE.ExtrudeGeometry( tailLightShape, extrudeSettings );
+            tailLightRoundedGeometry.center(); 
 
             const tailLightMaterial = new THREE.MeshStandardMaterial({
-                color: 0xff0000, emissive: 0xff0000, emissiveIntensity: 3.5
+                color: 0xff0000, emissive: 0xff0000, emissiveIntensity: 4.0 
             });
             
             const tailLightLMesh = new THREE.Mesh(tailLightRoundedGeometry, tailLightMaterial);
-            tailLightLMesh.position.set(-bodyWidth * 0.22, 0, -(bodyLength / 2) + 0.02 + tlDepth/2); 
+            tailLightLMesh.position.set(-bodyWidth * 0.25, 0.05, -(bodyLength / 2) + 0.01 + tlDepth / 2); 
+            tailLightLMesh.rotation.y = Math.PI; 
             car.add(tailLightLMesh);
             
             const tailLightRMesh = new THREE.Mesh(tailLightRoundedGeometry, tailLightMaterial);
-            tailLightRMesh.position.set(bodyWidth * 0.22, 0, -(bodyLength / 2) + 0.02 + tlDepth/2); 
+            tailLightRMesh.position.set(bodyWidth * 0.25, 0.05, -(bodyLength / 2) + 0.01 + tlDepth / 2); 
+            tailLightRMesh.rotation.y = Math.PI;
             car.add(tailLightRMesh);
 
             const rearSpotLightColor = 0xff0000;
@@ -345,16 +456,36 @@
             const rearSpotLightDecay = 1.5;
 
             const actualTailLightL = new THREE.SpotLight(rearSpotLightColor, rearSpotLightIntensity, rearSpotLightDistance, rearSpotLightAngle, rearSpotLightPenumbra, rearSpotLightDecay);
-            actualTailLightL.position.set(tailLightLMesh.position.x, tailLightLMesh.position.y, tailLightLMesh.position.z - tlDepth); 
+            actualTailLightL.position.set(tailLightLMesh.position.x, tailLightLMesh.position.y, tailLightLMesh.position.z - tlDepth * 0.1); 
             actualTailLightL.target.position.set(actualTailLightL.position.x, actualTailLightL.position.y, actualTailLightL.position.z - 10); 
             car.add(actualTailLightL);
             car.add(actualTailLightL.target);
 
             const actualTailLightR = new THREE.SpotLight(rearSpotLightColor, rearSpotLightIntensity, rearSpotLightDistance, rearSpotLightAngle, rearSpotLightPenumbra, rearSpotLightDecay);
-            actualTailLightR.position.set(tailLightRMesh.position.x, tailLightRMesh.position.y, tailLightRMesh.position.z - tlDepth);
+            actualTailLightR.position.set(tailLightRMesh.position.x, tailLightRMesh.position.y, tailLightRMesh.position.z - tlDepth * 0.1);
             actualTailLightR.target.position.set(actualTailLightR.position.x, actualTailLightR.position.y, actualTailLightR.position.z - 10);
             car.add(actualTailLightR);
             car.add(actualTailLightR.target);
+
+            const wheelRadius = 0.35;
+            const wheelWidth = 0.25;
+            const wheelGeometry = new THREE.CylinderGeometry(wheelRadius, wheelRadius, wheelWidth, 24);
+            const wheelMaterial = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.8, metalness: 0.1 });
+
+            const wheelPositions = [
+                { x: -bodyWidth / 2 + wheelWidth * 0.7, y: -bodyHeight / 2 + wheelRadius - 0.1, z: bodyLength / 2 - wheelRadius * 1.8 }, 
+                { x:  bodyWidth / 2 - wheelWidth * 0.7, y: -bodyHeight / 2 + wheelRadius - 0.1, z: bodyLength / 2 - wheelRadius * 1.8 }, 
+                { x: -bodyWidth / 2 + wheelWidth * 0.7, y: -bodyHeight / 2 + wheelRadius - 0.1, z: -bodyLength / 2 + wheelRadius * 1.8 }, 
+                { x:  bodyWidth / 2 - wheelWidth * 0.7, y: -bodyHeight / 2 + wheelRadius - 0.1, z: -bodyLength / 2 + wheelRadius * 1.8 }  
+            ];
+
+            wheelPositions.forEach(pos => {
+                const wheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
+                wheel.rotation.z = Math.PI / 2; 
+                wheel.position.set(pos.x, pos.y, pos.z);
+                wheel.castShadow = true;
+                car.add(wheel);
+            });
         }
 
         function createRoad() {
@@ -389,9 +520,16 @@
             const buildingWidth = Math.random() * 8 + 4;
             const buildingDepth = Math.random() * 8 + 4;
             const buildingGeometry = new THREE.BoxGeometry(buildingWidth, buildingHeight, buildingDepth);
-            const grayScale = Math.random() * 0.2 + 0.1;
+            
+            let buildingColor;
+            if (Math.random() < 0.6) { 
+                buildingColor = new THREE.Color(Math.random() * 0.05, Math.random() * 0.05, Math.random() * 0.2 + 0.15); 
+            } else { 
+                buildingColor = new THREE.Color(Math.random() * 0.1 + 0.2, Math.random() * 0.08 + 0.1, Math.random() * 0.05 + 0.02); 
+            }
+
             const buildingMaterial = new THREE.MeshStandardMaterial({
-                color: new THREE.Color(grayScale, grayScale, grayScale + 0.05),
+                color: buildingColor,
                 roughness: 0.7, metalness: 0.2
             });
             const building = new THREE.Mesh(buildingGeometry, buildingMaterial);
@@ -408,7 +546,7 @@
 
                     if (Math.random() < 0.90) { 
                         lightColor = 0xffe500; 
-                        lightIntensity = 7.0 + Math.random() * 5.0; 
+                        lightIntensity = 8.0 + Math.random() * 7.0; 
                         lightWidth = Math.random() * (buildingWidth * 0.10) + 0.15; 
                         lightHeight = Math.random() * (buildingHeight * 0.07) + 0.15; 
                     } else { 
@@ -668,7 +806,7 @@
             const postGroup = new THREE.Group();
             postGroup.name = "lightPost"; 
 
-            const poleHeight = 5.5 + Math.random() * 1.0; // Taller posts
+            const poleHeight = 5.5 + Math.random() * 1.0; 
             const poleRadius = 0.1;
             const poleMaterial = new THREE.MeshStandardMaterial({ color: 0x444444, metalness: 0.7, roughness: 0.4 });
             const poleGeometry = new THREE.CylinderGeometry(poleRadius, poleRadius * 0.9, poleHeight, 8);
@@ -681,26 +819,25 @@
             const fixtureGeometry = new THREE.BoxGeometry(fixtureSize, fixtureSize * 0.8, fixtureSize * 1.5); 
             const fixtureMaterial = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.5 });
             const fixture = new THREE.Mesh(fixtureGeometry, fixtureMaterial);
+            fixture.name = "lightPostFixtureArm"; 
             fixture.position.y = poleHeight - fixtureSize * 0.4; 
-            
-            // Determine arm direction based on which side of the road the post will be on
-            // This will be set when the post is cloned and positioned.
-            // For the prototype, let's assume it extends towards positive X from pole center.
             fixture.position.x = 0.3; 
             postGroup.add(fixture);
 
 
-            const lightColor = 0xffddaa; // Warm yellow
-            const intensity = 20; // Brighter street lights
-            const distance = 18;  // Increased reach
-            const angle = Math.PI / 3.5; // Slightly wider cone
+            const lightColor = 0xffddaa; 
+            const intensity = 20; 
+            const distance = 18;  
+            const angle = Math.PI / 3.5; 
             const penumbra = 0.3;
             const decay = 1.5;
 
             const spotLight = new THREE.SpotLight(lightColor, intensity, distance, angle, penumbra, decay);
+            spotLight.name = "lightPostSpotlight"; 
             spotLight.position.set(fixture.position.x, fixture.position.y - fixtureSize * 0.5 + 0.1, fixture.position.z);
             
             const targetObject = new THREE.Object3D();
+            targetObject.name = "lightPostSpotlightTarget"; 
             targetObject.position.set(spotLight.position.x, -poleHeight + 0.1, spotLight.position.z); 
             
             spotLight.target = targetObject;
@@ -712,35 +849,34 @@
             spotLight.shadow.mapSize.height = 256;
             spotLight.shadow.camera.near = 1;
             spotLight.shadow.camera.far = distance;
-            spotLight.shadow.bias = -0.001; // Helps with shadow acne on the road
+            spotLight.shadow.bias = -0.001; 
 
             return postGroup;
         }
 
         function createInitialLightPosts() {
             const numPostsPerSide = Math.floor((lightPostDespawnZ - lightPostSpawnZ) / lightPostSpacing);
-            const postPrototype = createLightPost(); // Create one prototype
+            const postPrototype = createLightPost(); 
 
             for (let i = 0; i < numPostsPerSide; i++) {
-                // Left side
-                const postL = postPrototype.clone(true); // Clone the prototype
+                const postL = postPrototype.clone(true); 
                 postL.position.x = -(roadWidth / 2 + 0.8); 
-                // Adjust fixture arm for left side (points towards road, so negative X relative to pole)
-                const fixtureL = postL.children.find(child => child.geometry instanceof THREE.BoxGeometry && child.material.color.getHexString() === '333333');
-                const spotLightL = postL.children.find(child => child instanceof THREE.SpotLight);
-                if(fixtureL) fixtureL.position.x = -0.3;
+                
+                const fixtureL = postL.getObjectByName("lightPostFixtureArm");
+                const spotLightL = postL.getObjectByName("lightPostSpotlight");
+                const targetL = postL.getObjectByName("lightPostSpotlightTarget");
+
+                if(fixtureL) fixtureL.position.x = -0.3; 
                 if(spotLightL) {
-                    spotLightL.position.x = -0.3;
-                    spotLightL.target.position.x = -0.3;
+                    spotLightL.position.x = -0.3; 
+                    if (targetL) targetL.position.x = -0.3; 
                 }
                 postL.position.z = lightPostSpawnZ + i * lightPostSpacing + Math.random() * lightPostSpacing * 0.3;
                 scene.add(postL);
                 lightPosts.push(postL);
 
-                // Right side
-                const postR = postPrototype.clone(true); // Clone again for the right side
+                const postR = postPrototype.clone(true); 
                 postR.position.x = (roadWidth / 2 + 0.8);
-                 // Fixture arm for right side is already correct (points towards road, positive X relative to pole)
                 postR.position.z = lightPostSpawnZ + i * lightPostSpacing + Math.random() * lightPostSpacing * 0.3;
                 scene.add(postR);
                 lightPosts.push(postR);
@@ -752,7 +888,7 @@
                 post.position.z += gameSpeed * lightPostMoveSpeedFactor;
 
                 if (post.position.z > lightPostDespawnZ) {
-                    post.position.z -= (lightPostDespawnZ - lightPostSpawnZ) + lightPostSpacing * (0.5 + Math.random() * 0.5) ; // Add more randomness to Z reset
+                    post.position.z -= (lightPostDespawnZ - lightPostSpawnZ) + lightPostSpacing * (0.5 + Math.random() * 0.5) ; 
                 }
             });
         }
@@ -824,7 +960,7 @@
             updateRoad();
             updateBuildingsAndBridge();
             updateDistantSkyline(); 
-            updateLightPosts(); // Update light posts
+            updateLightPosts(); 
             renderer.render(scene, camera);
         }
 

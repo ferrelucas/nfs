@@ -2,19 +2,19 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Neon Night Racer - Lamborghini Style</title>
     <style>
-        body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Arial', sans-serif; }
+        body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Arial', sans-serif; -webkit-user-select: none; -ms-user-select: none; user-select: none; }
         canvas { display: block; }
         #instructions {
             position: absolute;
-            bottom: 10px; /* Moved to bottom */
-            left: 50%;    /* Centered */
-            transform: translateX(-50%); /* Centered */
+            bottom: 10px; 
+            left: 50%;    
+            transform: translateX(-50%); 
             color: #fff;
-            background-color: rgba(0,0,0,0.7); /* Slightly more opaque background */
-            padding: 8px 15px; /* Adjusted padding */
+            background-color: rgba(0,0,0,0.7); 
+            padding: 8px 15px; 
             border-radius: 5px;
             font-size: 14px;
             text-align: center;
@@ -62,12 +62,13 @@
 </head>
 <body>
     <div id="instructions">
-        Use Left/Right Arrow Keys to move the car.
+        Use Left/Right Arrow Keys or Tap Left/Right side of screen to move.
     </div>
     <div id="game-logo">NIGHT DRIVE</div>
     <div id="game-message" class="message-box" style="display: none;"></div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
     <script>
         // --- SCENE SETUP ---
         let scene, camera, renderer;
@@ -97,7 +98,7 @@
         const carModelWidth = 2.2;
 
         // --- MOVEMENT AND ANIMATION PARAMETERS ---
-        const gameSpeed = 1.0; 
+        const gameSpeed = 1.6; // Increased game speed further
         const buildingMoveSpeedFactor = 1.0;
         const bridgeMoveSpeedFactor = 0.08; 
         const distantSkylineMoveSpeedFactor = 0.03; 
@@ -116,22 +117,39 @@
             if (keys.hasOwnProperty(event.key)) keys[event.key] = false;
         });
 
+        // --- TOUCH CONTROLS ---
+        function handleTouchStart(event) {
+            event.preventDefault(); 
+            if (event.touches.length > 0) {
+                const touchX = event.touches[0].clientX;
+                if (touchX < window.innerWidth / 2) {
+                    keys.ArrowLeft = true;
+                    keys.ArrowRight = false;
+                } else {
+                    keys.ArrowRight = true;
+                    keys.ArrowLeft = false;
+                }
+            }
+        }
+
+        function handleTouchEnd(event) {
+            event.preventDefault();
+            keys.ArrowLeft = false;
+            keys.ArrowRight = false;
+        }
+
+
         function init() {
             console.log("init started");
             try {
-                console.log("Setting up scene...");
                 scene = new THREE.Scene();
                 scene.fog = new THREE.Fog(0x00001a, 70, 800); 
-                console.log("Scene fog set.");
 
-                console.log("Setting up camera...");
                 camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
                 camera.position.set(0, 2.5, 7);
                 camera.lookAt(0, 1, 0);
                 scene.add(camera); 
-                console.log("Camera set up.");
 
-                console.log("Setting up renderer...");
                 renderer = new THREE.WebGLRenderer({ antialias: true });
                 renderer.setSize(window.innerWidth, window.innerHeight);
                 renderer.setPixelRatio(window.devicePixelRatio);
@@ -141,54 +159,32 @@
                 document.body.appendChild(renderer.domElement);
                 console.log("Renderer set up and appended.");
 
-                console.log("Setting up lights...");
-                const ambientLight = new THREE.AmbientLight(0x404060, 1.5); 
+                renderer.domElement.addEventListener('touchstart', handleTouchStart, { passive: false });
+                renderer.domElement.addEventListener('touchend', handleTouchEnd, { passive: false });
+
+
+                const ambientLight = new THREE.AmbientLight(0x404060, 2.2); // Increased ambient light
                 scene.add(ambientLight);
-                const directionalLight = new THREE.DirectionalLight(0x8080ff, 0.1); 
+                const directionalLight = new THREE.DirectionalLight(0x8080ff, 0.15); // Slightly increased directional
                 directionalLight.position.set(5, 1.6155, 2);
                 directionalLight.target.position.set(0, 0, 0);
                 scene.add(directionalLight.target);
                 scene.add(directionalLight);
                 console.log("Lights set up.");
 
-                console.log("Creating moon...");
                 createMoon();
-                console.log("Moon created.");
-
-                console.log("Creating car...");
                 createCar(); 
-                console.log("Car created.");
-
-                console.log("Creating camera light...");
                 createCameraLight(); 
-                console.log("Camera light created.");
-                
-                console.log("Creating road...");
                 createRoad();
-                console.log("Road created.");
-
-                console.log("Creating initial buildings...");
                 createInitialBuildings();
-                console.log("Initial buildings created.");
-
-                console.log("Creating initial distant skyline...");
                 createInitialDistantSkyline(); 
-                console.log("Initial distant skyline created.");
-
-                console.log("Creating bridge...");
                 createBridge(); 
-                console.log("Bridge created.");
-
-                console.log("Creating initial light posts...");
                 createInitialLightPosts(); 
-                console.log("Initial light posts created.");
-
-                console.log("Starting animation loop...");
                 animate();
                 console.log("init finished successfully");
 
             } catch (e) { 
-                console.error("CAUGHT ERROR DURING INITIALIZATION:");
+                console.error("CAUGHT ERROR DURING INITIALIZATION:", e);
                 console.error("Raw error object:", e); 
                 let errorMessage = "Unknown error";
                 if (e) {
@@ -284,7 +280,7 @@
                 metalness: 0.95,        
                 roughness: 0.05,        
                 emissive: carEmissiveColor, 
-                emissiveIntensity: 0.3,  // Subtle navy blue glow
+                emissiveIntensity: 0.3,  
                 clearcoat: 1.0,         
                 clearcoatRoughness: 0.03 
             });
@@ -360,21 +356,16 @@
             car.add(nose);
 
             // Neon Underglow with RectAreaLights
-            const underglowColor = 0x00ff00;
-            const underglowIntensity = 25; // Increased intensity
-            const underglowWidth = bodyLength * 0.75; // Length of the strip
-            const underglowHeight = 0.3;      // Width of the strip (was 0.15)
+            const underglowColor = 0x00ff00; // Green
+            const underglowIntensity = 30;  // Intensity for RectAreaLight
+            const underglowRectWidth = bodyWidth * 0.8; // Width of the light strip (along car width)
+            const underglowRectLength = bodyLength * 0.65; // Length of the light strip (along car length)
 
-            const underglowL = new THREE.RectAreaLight(underglowColor, underglowIntensity, underglowWidth, underglowHeight);
-            // Positioned further under and slightly inset
-            underglowL.position.set(-(bodyWidth / 2 - 0.3), -bodyHeight / 2 - 0.05, 0); 
-            underglowL.lookAt(-(bodyWidth / 2 - 0.3), -bodyHeight / 2 - 1.05, 0); // Point downwards
-            car.add(underglowL);
-
-            const underglowR = new THREE.RectAreaLight(underglowColor, underglowIntensity, underglowWidth, underglowHeight);
-            underglowR.position.set(bodyWidth / 2 - 0.3, -bodyHeight / 2 - 0.05, 0);
-            underglowR.lookAt(bodyWidth / 2 - 0.3, -bodyHeight / 2 - 1.05, 0);
-            car.add(underglowR);
+            const underglowLight = new THREE.RectAreaLight(underglowColor, underglowIntensity, underglowRectWidth, underglowRectLength);
+            underglowLight.position.set(0, -bodyHeight / 2 - 0.05, 0); // Centered under the car
+            underglowLight.lookAt(0, -bodyHeight / 2 - 1.05, 0); // Point downwards
+            underglowLight.rotation.x = -Math.PI / 2; // Ensure it's flat, shining down
+            car.add(underglowLight);
 
 
             const headLightHeight = 0.08; 
@@ -411,9 +402,12 @@
             actualHeadLightR.target.position.set(headLightMeshR.position.x, headLightMeshR.position.y - 0.5, headLightMeshR.position.z + 15);
             car.add(actualHeadLightR); car.add(actualHeadLightR.target);
 
-            const tlWidth = bodyWidth * 0.3; 
-            const tlHeight = 0.12;          
-            const tlCornerRadius = Math.min(tlWidth, tlHeight) * 0.4; 
+            // Taillights: 75% of previous size
+            const originalTlWidth = bodyWidth * 0.38;
+            const originalTlHeight = 0.16;
+            const tlWidth = originalTlWidth * 0.75; 
+            const tlHeight = originalTlHeight * 0.75;          
+            const tlCornerRadius = Math.min(tlWidth, tlHeight) * 0.35; 
             const tlDepth = 0.08; 
 
             const tailLightShape = new THREE.Shape();
@@ -430,21 +424,22 @@
             tailLightShape.lineTo( x + tlCornerRadius, y );
             tailLightShape.quadraticCurveTo( x, y, x, y + tlCornerRadius );
 
-            const extrudeSettings = { depth: tlDepth, bevelEnabled: false };
+            const extrudeSettings = { depth: tlDepth, bevelEnabled: true, bevelThickness: 0.01, bevelSize: 0.01, bevelSegments:1 };
             const tailLightRoundedGeometry = new THREE.ExtrudeGeometry( tailLightShape, extrudeSettings );
             tailLightRoundedGeometry.center(); 
 
             const tailLightMaterial = new THREE.MeshStandardMaterial({
-                color: 0xff0000, emissive: 0xff0000, emissiveIntensity: 4.0 
+                color: 0xff0000, emissive: 0xff0000, emissiveIntensity: 4.5 
             });
             
             const tailLightLMesh = new THREE.Mesh(tailLightRoundedGeometry, tailLightMaterial);
-            tailLightLMesh.position.set(-bodyWidth * 0.25, 0.05, -(bodyLength / 2) + 0.01 + tlDepth / 2); 
+            // Positioned at the very rear, slightly above the car's centerline for visibility
+            tailLightLMesh.position.set(-bodyWidth * 0.28, 0.08, -(bodyLength / 2) + tlDepth * 0.5 + 0.015); 
             tailLightLMesh.rotation.y = Math.PI; 
             car.add(tailLightLMesh);
             
             const tailLightRMesh = new THREE.Mesh(tailLightRoundedGeometry, tailLightMaterial);
-            tailLightRMesh.position.set(bodyWidth * 0.25, 0.05, -(bodyLength / 2) + 0.01 + tlDepth / 2); 
+            tailLightRMesh.position.set(bodyWidth * 0.28, 0.08, -(bodyLength / 2) + tlDepth * 0.5 + 0.015); 
             tailLightRMesh.rotation.y = Math.PI;
             car.add(tailLightRMesh);
 
@@ -871,13 +866,13 @@
                     spotLightL.position.x = -0.3; 
                     if (targetL) targetL.position.x = -0.3; 
                 }
-                postL.position.z = lightPostSpawnZ + i * lightPostSpacing + Math.random() * lightPostSpacing * 0.3;
+                postL.position.z = lightPostSpawnZ + i * lightPostSpacing; 
                 scene.add(postL);
                 lightPosts.push(postL);
 
                 const postR = postPrototype.clone(true); 
                 postR.position.x = (roadWidth / 2 + 0.8);
-                postR.position.z = lightPostSpawnZ + i * lightPostSpacing + Math.random() * lightPostSpacing * 0.3;
+                postR.position.z = lightPostSpawnZ + i * lightPostSpacing; 
                 scene.add(postR);
                 lightPosts.push(postR);
             }
@@ -888,7 +883,7 @@
                 post.position.z += gameSpeed * lightPostMoveSpeedFactor;
 
                 if (post.position.z > lightPostDespawnZ) {
-                    post.position.z -= (lightPostDespawnZ - lightPostSpawnZ) + lightPostSpacing * (0.5 + Math.random() * 0.5) ; 
+                    post.position.z -= (lightPostDespawnZ - lightPostSpawnZ + lightPostSpacing) ; 
                 }
             });
         }
